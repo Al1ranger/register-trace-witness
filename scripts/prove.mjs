@@ -1,7 +1,8 @@
 import fs from 'node:fs';
 import {spawn} from 'node:child_process';
 import assert from 'node:assert/strict';
-import {abi} from 'genlayer-js';
+import {abi, createAccount, createClient} from 'genlayer-js';
+import {studionet} from 'genlayer-js/chains';
 import {rpc, receipt, source, read, digest, sha, denied} from './check.mjs';
 
 const code = 'contracts/RegisterTraceWitness.py';
@@ -10,6 +11,7 @@ const journal = 'PROOFS.json';
 const commit = process.argv[2];
 const verifyOnly = process.argv.includes('--verify-only');
 const resumeUnbroadcast = process.argv.includes('--resume-unbroadcast');
+const ephemeralWriter = process.argv.includes('--ephemeral-writer');
 assert(/^[a-f0-9]{40}$/.test(commit ?? ''));
 const proof = fs.existsSync(journal)
   ? JSON.parse(fs.readFileSync(journal, 'utf8'))
@@ -52,7 +54,21 @@ async function transaction(step, args, signer, expected = 'SUCCESS', message) {
     entry = {step, args, signer: signer.address, nonce};
     proof.transactions.push(entry);
     save();
-    await send(args, signer, entry);
+    if (signer.client) {
+      const [action, address, functionName, flag, ...callArgs] = args;
+      assert.equal(action, 'write');
+      assert.equal(address, proof.address);
+      assert.equal(functionName, 'check_history');
+      assert.equal(flag, '--args');
+      await import('./broadcast-once.cjs');
+      entry.hash = await signer.client.writeContract({
+        address, functionName, args: callArgs, value: 0n, leaderOnly: false,
+      });
+      save();
+      console.log(entry.step, entry.hash);
+    } else {
+      await send(args, signer, entry);
+    }
   } else if (!entry.hash && !verifyOnly && resumeUnbroadcast) {
     assert.deepEqual(entry.args, args);
     assert.equal(entry.signer, signer.address);
@@ -92,16 +108,25 @@ const expectations = {
   ]},
 };
 assert.equal(await rpc('eth_chainId', []), '0xf22f');
+if (ephemeralWriter) {
+  assert.equal(studionet.id, 61999);
+  assert(proof.transactions[0]?.step === 'deploy' && proof.transactions[0].hash);
+  assert(!resumeUnbroadcast && !verifyOnly);
+}
 proof.address = await transaction('deploy', ['deploy', '--contract', code], publisher);
 proof.source = await source(proof.address);
 proof.examples ??= {};
 save();
 
+const account = ephemeralWriter ? createAccount() : null;
+const writer = account ? {address: account.address, client: createClient({chain: studionet, account})} : publisher;
 for (const [name, expected] of Object.entries(expectations)) {
   const ref = `${repo}/${commit}/fixtures/${name}.json`;
   const fixture = fs.readFileSync(`fixtures/${name}.json`);
   const args = ['write', proof.address, 'check_history', '--args', ref, sha(fixture)];
-  assert.equal((await transaction(name, args, publisher)).toLowerCase(), proof.address.toLowerCase());
+  const previous = proof.transactions.find(t => t.step === name);
+  const signer = previous?.hash ? {address: previous.signer} : writer;
+  assert.equal((await transaction(name, args, signer)).toLowerCase(), proof.address.toLowerCase());
   const entry = proof.transactions.find(t => t.step === name);
   const tx = await rpc('eth_getTransactionByHash', [entry.hash]);
   const leader = tx.consensus_data.leader_receipt.find(x => x.mode === 'leader');

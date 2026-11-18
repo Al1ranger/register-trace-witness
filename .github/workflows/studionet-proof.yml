@@ -1,0 +1,30 @@
+name: Verify StudioNet deployment and trace proofs
+on:
+  push:
+    branches:
+      - studio-proof-run
+
+permissions:
+  contents: read
+
+concurrency:
+  group: register-trace-witness-studionet
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci --ignore-scripts
+      - name: Resume from known deployment
+        run: node scripts/prove.mjs 12d6ae88200d12daa6bc5f52ef53b5ea24b743b4 --ephemeral-writer
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: studionet-receipts
+          path: PROOFS.json

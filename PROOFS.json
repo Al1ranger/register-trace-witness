@@ -1,0 +1,17 @@
+{
+  "network": "StudioNet",
+  "source_commit": "12d6ae88200d12daa6bc5f52ef53b5ea24b743b4",
+  "transactions": [
+    {
+      "step": "deploy",
+      "args": [
+        "deploy",
+        "--contract",
+        "contracts/RegisterTraceWitness.py"
+      ],
+      "signer": "0x7a413BB4AB62E31d62d4cD9efC8C8a8Dae37FB42",
+      "nonce": "0x20e",
+      "hash": "0xe67a0b7cf106b40b8c8f9172cda09861ca1aed7164c6614631d8e6899b402cb7"
+    }
+  ]
+}
