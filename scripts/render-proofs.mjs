@@ -33,6 +33,7 @@ fs.writeFileSync('LIVE_PROOFS.md', [
   `${contract} · ${source} · ${fixtures} · [Receipt and readback data](PROOFS.json)`, '',
   `Deployed source matched the pinned commit. Normalized source SHA-256 is \`${proof.source.sha256}\`.`,
   'Each receipt finalized with successful execution and majority agreement.', '',
+  `A [hosted verification run](${repo}/actions/runs/44281884416) resumed the recorded deployment and signed the fixture calls with a temporary StudioNet account.`, '',
   '| Transaction | Outcome | Independently verified readback |',
   '| --- | --- | --- |',
   `| ${links[0]} | Deployed | Source match |`,

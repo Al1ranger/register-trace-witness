@@ -38,3 +38,12 @@ python -m pip install -r requirements-dev.txt
 python -m pytest tests -q
 genvm-lint check contracts/RegisterTraceWitness.py
 ```
+
+[StudioNet proofs](LIVE_PROOFS.md) · [Submission](SUBMISSION.md)
+
+Replay the receipt and state checks without a signer.
+
+```sh
+npm ci
+node scripts/prove.mjs 12d6ae88200d12daa6bc5f52ef53b5ea24b743b4 --verify-only
+```

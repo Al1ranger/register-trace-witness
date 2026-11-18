@@ -101,7 +101,9 @@ for (const [name, expected] of Object.entries(expectations)) {
   const ref = `${repo}/${commit}/fixtures/${name}.json`;
   const fixture = fs.readFileSync(`fixtures/${name}.json`);
   const args = ['write', proof.address, 'check_history', '--args', ref, sha(fixture)];
-  assert.equal((await transaction(name, args, publisher)).toLowerCase(), proof.address.toLowerCase());
+  const previous = proof.transactions.find(t => t.step === name);
+  const signer = previous?.hash ? {address: previous.signer} : publisher;
+  assert.equal((await transaction(name, args, signer)).toLowerCase(), proof.address.toLowerCase());
   const entry = proof.transactions.find(t => t.step === name);
   const tx = await rpc('eth_getTransactionByHash', [entry.hash]);
   const leader = tx.consensus_data.leader_receipt.find(x => x.mode === 'leader');
