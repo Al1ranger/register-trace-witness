@@ -1,0 +1,17 @@
+{
+  "initial": 0,
+  "events": [
+    ["call", "A", "alpha", "write", 1],
+    ["return", "A", null],
+    ["call", "B", "beta", "write", 2],
+    ["return", "B", null],
+    ["call", "C", "alpha", "read"],
+    ["return", "C", 1],
+    ["call", "D", "beta", "cas", 1, 3],
+    ["return", "D", true],
+    ["call", "E", "beta", "cas", 1, 4],
+    ["return", "E", false],
+    ["call", "F", "alpha", "read"],
+    ["return", "F", 3]
+  ]
+}

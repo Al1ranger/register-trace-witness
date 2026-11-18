@@ -1,0 +1,9 @@
+{
+  "initial": 0,
+  "events": [
+    ["call", "A", "alpha", "write", 1],
+    ["call", "B", "beta", "write", 2],
+    ["return", "B", null],
+    ["return", "A", null]
+  ]
+}
